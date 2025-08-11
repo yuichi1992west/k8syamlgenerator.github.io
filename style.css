@@ -3,6 +3,7 @@
     --panel-background: #ffffff; --text-color: #212529; --label-color: #495057;
     --header-color: #004892; --pre-bg-color: #282c34; --pre-text-color: #abb2bf;
     --required-color: #dc3545; --notice-color: #0d6efd; --link-color: #0d6efd;
+    --danger-color: #dc3545;
 }
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -14,6 +15,7 @@ body {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex-shrink: 0;
     display: flex; justify-content: space-between; align-items: center;
 }
+.header-buttons { display: flex; gap: 10px; }
 .main-container { display: flex; flex: 1; overflow: hidden; }
 .input-panel, .output-panel {
     width: 50%; height: 100%; overflow-y: auto; padding: 20px; box-sizing: border-box;
@@ -44,6 +46,7 @@ details[open] summary { border-bottom: 1px solid var(--border-color); }
 .content { padding: 20px; }
 .form-group { margin-bottom: 20px; }
 .sub-form-group { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+hr { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
 label {
     display: block; font-weight: 500; margin-bottom: 8px; color: var(--label-color);
 }
@@ -57,6 +60,7 @@ input[type="text"], input[type="number"], select {
     box-sizing: border-box; width: 100%; padding: 8px 12px;
     border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px;
 }
+input.invalid { border-color: var(--danger-color); box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25); }
 .button {
     display: inline-block; background-color: var(--primary-color); color: white; padding: 8px 15px;
     border: none; border-radius: 4px; cursor: pointer; font-size: 14px; text-align: center;
@@ -64,13 +68,15 @@ input[type="text"], input[type="number"], select {
 }
 .button:hover { opacity: 0.85; }
 .button.secondary { background-color: #6c757d; }
-.button.danger { background-color: #dc3545; padding: 5px 10px; font-size: 12px;}
+.button.danger { background-color: var(--danger-color); }
 .dynamic-list-item {
-    border: 1px dashed var(--border-color); padding: 15px; margin-top: 10px;
-    border-radius: 4px; background: #fafafa;
+    border: 1px solid #e9ecef; padding: 15px; margin-top: 10px;
+    border-radius: 4px; background: #fdfdff;
 }
 .key-value-item { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end;}
 .single-value-item { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end;}
+.toleration-item { display: grid; grid-template-columns: repeat(4, 1fr) auto; gap: 10px; align-items: end; }
+.envFrom-item { display: grid; grid-template-columns: 1fr 2fr auto; gap: 10px; align-items: end; }
 .probe-item { display: block; }
 
 /* Switch for CKAD Mode */

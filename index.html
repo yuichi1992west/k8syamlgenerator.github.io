@@ -3,13 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultimate Kubernetes Pod Generator (CKAD Study Tool)</title>
+    <title>Ultimate Kubernetes Pod Generator (CKAD Study Tool) - Final Version</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header class="header">
         <h2>Ultimate K8s Pod Generator</h2>
-        <button type="button" class="button secondary" id="load-nginx-sample">Nginxサンプルを読み込む</button>
+        <div class="header-buttons">
+            <button type="button" class="button secondary" id="load-nginx-sample">Nginxサンプル</button>
+            <button type="button" class="button secondary" id="load-ubuntu-sample">Ubuntuサンプル</button>
+            <button type="button" class="button danger" id="reset-form-btn">フォームをリセット</button>
+        </div>
     </header>
 
     <main class="main-container">
@@ -19,7 +23,7 @@
                 <div class="content">
                     <div class="form-group">
                         <label for="podName">Pod Name <span class="required">(必須)</span><a href="https://k8s.io/docs/concepts/overview/working-with-objects/names/" target="_blank">Doc</a></label>
-                        <input type="text" id="podName" value="my-pod">
+                        <input type="text" id="podName" value="my-pod" required>
                     </div>
                     <div class="form-group">
                         <label for="namespace">Namespace <a href="https://k8s.io/docs/concepts/overview/working-with-objects/namespaces/" target="_blank">Doc</a></label>
@@ -29,11 +33,6 @@
                         <label>Labels <a href="https://k8s.io/docs/concepts/overview/working-with-objects/labels/" target="_blank">Doc</a></label>
                         <div id="labels-list" class="dynamic-list"></div>
                         <button type="button" class="button" data-action="add" data-type="labels">+ Add Label</button>
-                    </div>
-                     <div class="form-group">
-                        <label>Annotations <a href="https://k8s.io/docs/concepts/overview/working-with-objects/annotations/" target="_blank">Doc</a></label>
-                        <div id="annotations-list" class="dynamic-list"></div>
-                        <button type="button" class="button" data-action="add" data-type="annotations">+ Add Annotation</button>
                     </div>
                 </div>
             </details>
@@ -59,14 +58,6 @@
                             <option>Never</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                         <label>Pod Security Context <a href="https://k8s.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod" target="_blank">Doc</a></label>
-                        <div class="sub-form-group">
-                             <input type="number" id="pod_sc_runAsUser" placeholder="runAsUser">
-                             <input type="number" id="pod_sc_runAsGroup" placeholder="runAsGroup">
-                             <input type="number" id="pod_sc_fsGroup" placeholder="fsGroup">
-                        </div>
-                    </div>
                 </div>
             </details>
             
@@ -75,17 +66,17 @@
                 <div class="content">
                     <div class="form-group">
                         <label for="containerName">Container Name <span class="required">(必須)</span></label>
-                         <input type="text" id="containerName" value="main-container">
+                         <input type="text" id="containerName" value="main-container" required>
                     </div>
                     <div class="form-group">
                         <label for="imageName">Image <span class="required">(必須)</span><a href="https://k8s.io/docs/concepts/containers/images/" target="_blank">Doc</a></label>
-                        <input type="text" id="imageName" value="nginx:latest">
+                        <input type="text" id="imageName" value="nginx:latest" required>
                     </div>
                     <div class="form-group">
                         <label>Command & Args <a href="https://k8s.io/docs/tasks/inject-data-application/define-command-argument-container/" target="_blank">Doc</a></label>
-                        <div id="command-list" class="dynamic-list single-value"></div>
+                        <div id="command-list" class="dynamic-list"></div>
                         <button type="button" class="button" data-action="add" data-type="command">+ Add Command</button>
-                        <div id="args-list" class="dynamic-list single-value" style="margin-top:10px;"></div>
+                        <div id="args-list" class="dynamic-list" style="margin-top:10px;"></div>
                         <button type="button" class="button" data-action="add" data-type="args">+ Add Argument</button>
                     </div>
                     <div class="form-group">
@@ -99,22 +90,43 @@
                     </div>
                 </div>
             </details>
+            
+             <details>
+                <summary>Environment Variables <a href="https://k8s.io/docs/tasks/inject-data-application/environment-variable-expose-pod-information/" target="_blank">Doc</a></summary>
+                <div class="content">
+                    <h4>Key-Value Pairs</h4>
+                    <div id="env-list" class="dynamic-list"></div>
+                    <button type="button" class="button" data-action="add" data-type="env">+ Add Env Var</button>
+                    <hr>
+                    <h4>From ConfigMap/Secret <a href="https://k8s.io/docs/tasks/configure-pod-container/configure-pod-configmap/#configure-all-key-value-pairs-in-a-configmap-as-container-environment-variables" target="_blank">Doc</a></h4>
+                    <div id="envFrom-list" class="dynamic-list"></div>
+                    <button type="button" class="button" data-action="add" data-type="envFrom">+ Add envFrom</button>
+                </div>
+            </details>
 
             <details>
-                <summary>Probes (Liveness / Readiness / Startup)</summary>
+                <summary>Probes (Liveness / Readiness / Startup) <a href="https://k8s.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/" target="_blank">Doc</a></summary>
                 <div class="content" id="probe-container"></div>
             </details>
             
             <details>
-                <summary>Volumes & Volume Mounts</summary>
+                <summary>Volumes & Volume Mounts <span class="notice">(依存リソースの事前作成が必要な場合があります)</span></summary>
                 <div class="content">
                     <h4>Volumes <a href="https://k8s.io/docs/concepts/storage/volumes/" target="_blank">Doc</a></h4>
                     <div id="volume-list" class="dynamic-list"></div>
                     <button type="button" class="button" data-action="add" data-type="volume">+ Add Volume</button>
-                    <hr style="margin: 20px 0;">
+                    <hr>
                     <h4>Volume Mounts <a href="https://k8s.io/docs/concepts/storage/volumes/#using-a-volume" target="_blank">Doc</a></h4>
                     <div id="volumeMount-list" class="dynamic-list"></div>
                     <button type="button" class="button" data-action="add" data-type="volumeMount">+ Add Volume Mount</button>
+                </div>
+            </details>
+
+             <details>
+                <summary>Tolerations <a href="https://k8s.io/docs/concepts/scheduling-eviction/taint-and-toleration/" target="_blank">Doc</a></summary>
+                <div class="content">
+                    <div id="toleration-list" class="dynamic-list"></div>
+                    <button type="button" class="button" data-action="add" data-type="toleration">+ Add Toleration</button>
                 </div>
             </details>
         </div>
@@ -152,53 +164,41 @@
     </template>
     <template id="volume-template">
         <div class="dynamic-list-item">
-            <div class="form-group">
-                <label>Volume Name <span class="required">(必須)</span></label>
-                <input type="text" class="item-name">
-            </div>
-            <div class="form-group">
-                <label>Volume Type</label>
-                <select class="item-type">
-                    <option value="emptyDir">emptyDir</option>
-                    <option value="configMap">ConfigMap</option>
-                    <option value="secret">Secret</option>
-                    <option value="persistentVolumeClaim">PersistentVolumeClaim</option>
-                </select>
-            </div>
+            <div class="form-group"><label>Volume Name <span class="required">(必須)</span></label><input type="text" class="item-name" required></div>
+            <div class="form-group"><label>Volume Type</label><select class="item-type"><option value="emptyDir">emptyDir</option><option value="configMap">ConfigMap</option><option value="secret">Secret</option><option value="persistentVolumeClaim">PVC</option></select></div>
             <div class="volume-options"></div>
-            <button type="button" class="button danger" data-action="remove" data-type="volume">Remove</button>
+            <button type="button" class="button danger" data-action="remove">Remove</button>
         </div>
     </template>
     <template id="volumeMount-template">
          <div class="dynamic-list-item key-value-item">
-            <div>
-                <label>Volume to Mount</label>
-                <select class="item-name"></select>
-            </div>
-            <div>
-                 <label>Mount Path <span class="required">(必須)</span></label>
-                <input type="text" class="item-mountPath" placeholder="/path/in/container">
-            </div>
+            <div><label>Volume to Mount</label><select class="item-name"></select></div>
+            <div><label>Mount Path <span class="required">(必須)</span></label><input type="text" class="item-mountPath" placeholder="/path/in/container" required></div>
             <button type="button" class="button danger" data-action="remove">X</button>
         </div>
     </template>
      <template id="probe-template">
         <div class="dynamic-list-item probe-item">
             <h4 class="probe-label"></h4>
-            <div class="form-group">
-                <label>Probe Type</label>
-                <select class="probe-type">
-                    <option value="none">None</option><option value="httpGet">HTTP GET</option>
-                    <option value="tcpSocket">TCP Socket</option><option value="exec">Exec Command</option>
-                </select>
-            </div>
+            <div class="form-group"><label>Probe Type</label><select class="probe-type"><option value="none">None</option><option value="httpGet">HTTP GET</option><option value="tcpSocket">TCP Socket</option><option value="exec">Exec Command</option></select></div>
             <div class="probe-options"></div>
-            <div class="sub-form-group" style="margin-top:10px;">
-                <input type="number" class="probe-initialDelaySeconds" placeholder="Initial Delay (s)">
-                <input type="number" class="probe-periodSeconds" placeholder="Period (s)">
-                <input type="number" class="probe-timeoutSeconds" placeholder="Timeout (s)">
-                <input type="number" class="probe-failureThreshold" placeholder="Failure Threshold">
-            </div>
+            <div class="sub-form-group" style="margin-top:10px;"><input type="number" class="probe-initialDelaySeconds" placeholder="Initial Delay (s)"><input type="number" class="probe-periodSeconds" placeholder="Period (s)"><input type="number" class="probe-timeoutSeconds" placeholder="Timeout (s)"><input type="number" class="probe-failureThreshold" placeholder="Failure Threshold"></div>
+        </div>
+    </template>
+    <template id="toleration-template">
+         <div class="dynamic-list-item toleration-item">
+            <input type="text" class="item-key" placeholder="Key">
+            <select class="item-operator"><option>Equal</option><option>Exists</option></select>
+            <input type="text" class="item-value" placeholder="Value (if operator is Equal)">
+            <select class="item-effect"><option>NoSchedule</option><option>PreferNoSchedule</option><option>NoExecute</option></select>
+            <button type="button" class="button danger" data-action="remove">X</button>
+        </div>
+    </template>
+    <template id="envFrom-template">
+        <div class="dynamic-list-item envFrom-item">
+            <select class="item-type"><option value="configMapRef">ConfigMap</option><option value="secretRef">Secret</option></select>
+            <input type="text" class="item-name" placeholder="Name of source">
+            <button type="button" class="button danger" data-action="remove">X</button>
         </div>
     </template>
 
