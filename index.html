@@ -9,12 +9,7 @@
 <body>
     <header class="header">
         <h2>Ultimate K8s Pod Generator</h2>
-        <div class="header-buttons">
-            <button type="button" class="button secondary" id="load-nginx-sample">Nginxサンプル</button>
-            <button type="button" class="button secondary" id="load-ubuntu-sample">Ubuntuサンプル</button>
-            <button type="button" class="button danger" id="reset-form-btn">フォームをリセット</button>
-        </div>
-    </header>
+        </header>
 
     <main class="main-container">
         <div class="input-panel" id="kube-form">
@@ -55,7 +50,7 @@
 
             <details><summary>Environment Variables</summary><div class="content"><h4>Key-Value Pairs</h4><div id="env-list" class="dynamic-list"></div><button type="button" class="button" data-action="add" data-type="env">+ Add Env Var</button><hr><h4>From ConfigMap/Secret</h4><div id="envFrom-list" class="dynamic-list"></div><button type="button" class="button" data-action="add" data-type="envFrom">+ Add envFrom</button></div></details>
             
-            <details><summary>Probes (Liveness / Readiness / Startup)</summary><div class="content" id="probe-container"></div></details>
+            <details><summary>Probes (Liveness / Readiness / Startup) <a href="https://k8s.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/" target="_blank">Doc</a></summary><div class="content" id="probe-container"></div></details>
             
             <details><summary>Volumes & Volume Mounts <span class="notice">(依存リソースの事前作成が必要な場合があります)</span></summary><div class="content"><h4>Volumes</h4><div id="volume-list" class="dynamic-list"></div><button type="button" class="button" data-action="add" data-type="volume">+ Add Volume</button><hr><h4>Volume Mounts</h4><div id="volumeMount-list" class="dynamic-list"></div><button type="button" class="button" data-action="add" data-type="volumeMount">+ Add Volume Mount</button></div></details>
         </div>
