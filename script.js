@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function addDynamicItem(type) {
         const templateIdMap = {
             labels: 'key-value-template', nodeSelector: 'key-value-template', env: 'key-value-template',
-            command: 'single-value-template', args: 'single-value-template', imagePullSecrets: 'single-value-template',
+            command: 'single-value-template', args: 'single-value-template', 
             volume: 'volume-template', volumeMount: 'volumeMount-template',
             envFrom: 'envFrom-template', initContainers: 'initContainer-template'
         };
@@ -31,12 +31,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!templateId) return;
 
         const template = get(templateId).content.cloneNode(true);
+        const newItem = template.firstElementChild;
         const listContainer = get(`${type}-list`);
         if (listContainer) {
             listContainer.appendChild(template);
+            if (type === 'volume') updateVolumeOptions(newItem.querySelector('.item-type'));
+            if (type === 'volumeMount') updateVolumeMountOptions();
         }
-        if (type === 'volume') updateVolumeOptions(listContainer.lastElementChild.querySelector('.item-type'));
-        if (type === 'volumeMount') updateVolumeMountOptions();
     }
 
     function removeDynamicItem(element) {
@@ -103,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return {
             podName: getVal('podName'), namespace: getVal('namespace'), labels: getKv('labels-list'),
             serviceAccountName: getVal('serviceAccountName'), nodeSelector: getKv('nodeSelector-list'),
-            restartPolicy: getVal('restartPolicy'), imagePullSecrets: getSingle('imagePullSecrets-list').map(s => ({name: s})),
+            restartPolicy: getVal('restartPolicy'), 
             volumes: Array.from(getAll('#volume-list .dynamic-list-item')).map(item => {
                 const type = item.querySelector('.item-type')?.value;
                 const vol = { name: item.querySelector('.item-name')?.value, type: type };
@@ -125,7 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     return probe;
                 }).filter(p => p.type !== 'none'),
                 volumeMounts: Array.from(getAll('#volumeMount-list .dynamic-list-item')).map(item => ({ name: item.querySelector('.item-name')?.value, mountPath: item.querySelector('.item-mountPath')?.value })).filter(vm => vm.name && vm.mountPath),
-                lifecycle: { postStart: getVal('lifecycle_postStart'), preStop: getVal('lifecycle_preStop') },
             },
         };
     }
@@ -145,7 +145,6 @@ document.addEventListener('DOMContentLoaded', () => {
             yaml += `\nspec:`;
             if (state.serviceAccountName) yaml += `\n  serviceAccountName: ${state.serviceAccountName}`;
             if (state.restartPolicy !== 'Always') yaml += `\n  restartPolicy: ${state.restartPolicy}`;
-            if (state.imagePullSecrets.length > 0) { yaml += ckadComment('プライベートレジストリからイメージをプルするためのSecret', 'imagePullSecrets') + `\n  imagePullSecrets:`; state.imagePullSecrets.forEach(s => { yaml += `\n  - name: ${s.name}`; });}
             if (state.nodeSelector.length > 0) { yaml += `\n  nodeSelector:`; state.nodeSelector.forEach(s => { yaml += `\n    ${s.key}: ${s.value}`; }); }
             if (state.volumes.length > 0) {
                  yaml += `\n  volumes:`;
@@ -180,8 +179,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (c.probes.length > 0) {
                  c.probes.forEach(p => {
                     let probeDef = '';
-                    if(p.type === 'httpGet') probeDef += `\n      httpGet:\n        path: "${p.path || '/'}"\n        port: ${parseInt(p.port)}`;
-                    else if(p.type === 'tcpSocket') probeDef += `\n      tcpSocket:\n        port: ${parseInt(p.port)}`;
+                    if(p.type === 'httpGet' && p.port) probeDef += `\n      httpGet:\n        path: "${p.path || '/'}"\n        port: ${parseInt(p.port)}`;
+                    else if(p.type === 'tcpSocket' && p.port) probeDef += `\n      tcpSocket:\n        port: ${parseInt(p.port)}`;
                     else if(p.type === 'exec' && p.command && p.command.length > 0) probeDef += `\n      exec:\n        command: [${p.command.map(cmd => `"${cmd}"`).join(', ')}]`;
                     else return;
                     if(p.initialDelaySeconds) probeDef += `\n      initialDelaySeconds: ${parseInt(p.initialDelaySeconds)}`;
@@ -192,14 +191,9 @@ document.addEventListener('DOMContentLoaded', () => {
                  });
             }
              if (c.volumeMounts.length > 0) { yaml += `\n    volumeMounts:`; c.volumeMounts.forEach(vm => { yaml += `\n    - name: ${vm.name}\n      mountPath: "${vm.mountPath}"`; }); }
-             if (c.lifecycle.postStart || c.lifecycle.preStop) {
-                 yaml += `\n    lifecycle:`;
-                 if(c.lifecycle.postStart) yaml += `\n      postStart:\n        exec:\n          command: [${c.lifecycle.postStart.split(',').map(s=>`"${s.trim()}"`).join(', ')}]`;
-                 if(c.lifecycle.preStop) yaml += `\n      preStop:\n        exec:\n          command: [${c.lifecycle.preStop.split(',').map(s=>`"${s.trim()}"`).join(', ')}]`;
-             }
+            
             yamlOutput.value = yaml;
             get('deploy-command').textContent = `kubectl apply -f ${state.podName}.yaml`;
-            localStorage.setItem('podGeneratorState', JSON.stringify(state));
             validateForm();
         } catch (error) { yamlOutput.value = `エラーが発生しました:\n${error.stack}`; console.error("YAML Generation Error:", error); }
     }
@@ -223,6 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.addEventListener('click', (e) => {
             const button = e.target.closest('button[data-action]');
             if (!button) return;
+            e.preventDefault();
             const action = button.dataset.action;
             if (action === 'add') addDynamicItem(button.dataset.type);
             if (action === 'remove') removeDynamicItem(button);
@@ -235,29 +230,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const blob = new Blob([yamlOutput.value], { type: 'text/yaml' });
             const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = filename; link.click(); URL.revokeObjectURL(link.href);
         });
-        get('reset-form-btn').addEventListener('click', () => { if(confirm('フォームの全内容をリセットしますか？')) { localStorage.removeItem('podGeneratorState'); window.location.reload(); } });
-        
-        const resetAndLoad = (loader) => { form.reset(); getAll('.dynamic-list').forEach(l => l.innerHTML = ''); initializeProbes(); loader(); generateYaml(); };
-        
-        get('load-nginx-sample').addEventListener('click', () => resetAndLoad(() => {
-            get('podName').value = 'nginx-sample-pod';
-            addDynamicItem('labels'); const l = get('labels-list').lastElementChild; l.querySelector('.item-key').value = 'app'; l.querySelector('.item-value').value = 'my-nginx';
-            get('containerName').value = 'nginx-container'; get('imageName').value = 'nginx:1.27.1';
-            alert('Nginx Podのサンプルを読み込みました。');
-        }));
-        
-        get('load-ubuntu-sample').addEventListener('click', () => resetAndLoad(() => {
-            get('podName').value = 'ubuntu-sleeper';
-            get('containerName').value = 'ubuntu-container'; get('imageName').value = 'ubuntu:latest';
-            addDynamicItem('command'); get('command-list').lastElementChild.querySelector('.item-value').value = 'sleep';
-            addDynamicItem('args'); get('args-list').lastElementChild.querySelector('.item-value').value = 'infinity';
-            alert('Ubuntu sleeper Podのサンプルを読み込みました。');
-        }));
+        get('ckad-mode-toggle').addEventListener('change', generateYaml);
     }
 
     // --- INITIALIZATION ---
     initializeProbes();
     setupEventListeners();
-    // A full applyStateToForm function would be needed for complete restoration.
     generateYaml();
 });
