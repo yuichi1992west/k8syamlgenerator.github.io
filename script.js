@@ -143,6 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // SPEC
             yaml += comment('Podの望ましい状態を定義するSpec', 'spec');
             yaml += `\nspec:`;
+            yaml += `\n  containers:`;
             if (state.serviceAccountName) yaml += `\n  serviceAccountName: ${state.serviceAccountName}`;
             if (state.restartPolicy !== 'Always') yaml += `\n  restartPolicy: ${state.restartPolicy}`;
             if (state.nodeSelector.length > 0) { yaml += `\n  nodeSelector:`; state.nodeSelector.forEach(s => { yaml += `\n    ${s.key}: ${s.value}`; }); }
