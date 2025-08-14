@@ -12,8 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- UTILITY FUNCTIONS ---
     function get(id) { return document.getElementById(id); }
     function getAll(selector, parent = document) { return parent.querySelectorAll(selector); }
-    const ckadComment = (text, docUrlKey) => {
-        if (!get('ckad-mode-toggle').checked) return '';
+    const comment = (text, docUrlKey) => {
+        if (!get('comment-mode-toggle').checked) return '';
         const url = K8S_DOCS[docUrlKey] || '';
         const docLine = url ? `\n# Doc: ${url}` : '';
         return `\n# ${text}${docLine}`;
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function addDynamicItem(type) {
         const templateIdMap = {
             labels: 'key-value-template', nodeSelector: 'key-value-template', env: 'key-value-template',
-            command: 'single-value-template', args: 'single-value-template', 
+            command: 'single-value-template', args: 'single-value-template',
             volume: 'volume-template', volumeMount: 'volumeMount-template',
             envFrom: 'envFrom-template', initContainers: 'initContainer-template'
         };
@@ -54,8 +54,8 @@ document.addEventListener('DOMContentLoaded', () => {
         container.innerHTML = '';
         const type = selectElement.value;
         if (type === 'configMap' || type === 'secret' || type === 'persistentVolumeClaim') {
-            const resourceName = type === 'persistentVolumeClaim' ? 'pvc' : type;
-            container.innerHTML = `<div class="form-group" style="margin-top:10px;"><label>${type} Name <span class="notice">(注意: 事前に${type}の作成が必要)</span></label><input type="text" class="${resourceName}-name" placeholder="Name of existing ${type}"></div>`;
+            const resourceName = type === 'persistentVolumeClaim' ? 'pvc' : 'Source';
+            container.innerHTML = `<div class="form-group" style="margin-top:10px;"><label>${resourceName} Name <span class="notice">(注意: 事前に${type}の作成が必要)</span></label><input type="text" class="${type}-name" placeholder="Name of existing ${type}"></div>`;
         }
     }
 
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const definedVolumes = Array.from(getAll('#volume-list .item-name')).map(input => input.value).filter(Boolean);
         getAll('#volumeMount-list .item-name').forEach(select => {
             const currentSelection = select.value;
-            select.innerHTML = '<option value="">-- Select a Volume --</option>';
+            select.innerHTML = '<option value="">-- ストレージを選択 --</option>';
             definedVolumes.forEach(volName => {
                 const option = document.createElement('option');
                 option.value = volName; option.textContent = volName;
@@ -77,11 +77,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = get('probe-container');
         if (!container) return;
         container.innerHTML = '';
-        ['Liveness', 'Readiness', 'Startup'].forEach(probeName => {
+        ['起動時(Startup)', '生存(Liveness)', '準備完了(Readiness)'].forEach(probeName => {
             const template = get('probe-template').content.cloneNode(true);
             const item = template.querySelector('.probe-item');
-            item.dataset.probeName = probeName.toLowerCase();
-            item.querySelector('.probe-label').textContent = `${probeName} Probe`;
+            item.dataset.probeName = probeName.match(/\((.*?)\)/)[1].toLowerCase(); // Extracts text in parens
+            item.querySelector('.probe-label').textContent = `${probeName}チェック`;
             container.appendChild(template);
         });
     }
@@ -90,9 +90,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = selectElement.closest('.probe-item').querySelector('.probe-options');
         container.innerHTML = '';
         const type = selectElement.value;
-        if (type === 'httpGet') container.innerHTML = `<div class="sub-form-group"><input type="text" class="probe-http-path" placeholder="Path (e.g., /healthz)"><input type="number" class="probe-http-port" placeholder="Port (e.g., 8080)"></div>`;
-        else if (type === 'tcpSocket') container.innerHTML = `<input type="number" class="probe-tcp-port" placeholder="Port (e.g., 8080)">`;
-        else if (type === 'exec') container.innerHTML = `<input type="text" class="probe-exec-command" placeholder="Command (e.g., cat,/tmp/healthy)">`;
+        if (type === 'httpGet') container.innerHTML = `<div class="sub-form-group"><input type="text" class="probe-http-path" placeholder="パス (例: /healthz)"><input type="number" class="probe-http-port" placeholder="ポート番号 (例: 8080)"></div>`;
+        else if (type === 'tcpSocket') container.innerHTML = `<input type="number" class="probe-tcp-port" placeholder="ポート番号 (例: 8080)">`;
+        else if (type === 'exec') container.innerHTML = `<input type="text" class="probe-exec-command" placeholder="コマンド (例: cat,/tmp/healthy)">`;
     }
     
     // --- STATE COLLECTION ---
@@ -136,12 +136,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const state = collectState();
             let yaml = `apiVersion: v1\nkind: Pod`;
             // METADATA
-            yaml += ckadComment('PodやServiceなどのAPIオブジェクトを識別するためのデータ', 'metadata');
+            yaml += comment('PodやServiceなどのAPIオブジェクトを識別するためのデータ', 'metadata');
             yaml += `\nmetadata:\n  name: ${state.podName}`;
             if (state.namespace) yaml += `\n  namespace: ${state.namespace}`;
             if (state.labels.length > 0) { yaml += `\n  labels:`; state.labels.forEach(l => { yaml += `\n    ${l.key}: ${l.value}`; }); }
             // SPEC
-            yaml += ckadComment('Podの望ましい状態を定義するSpec', 'spec');
+            yaml += comment('Podの望ましい状態を定義するSpec', 'spec');
             yaml += `\nspec:`;
             if (state.serviceAccountName) yaml += `\n  serviceAccountName: ${state.serviceAccountName}`;
             if (state.restartPolicy !== 'Always') yaml += `\n  restartPolicy: ${state.restartPolicy}`;
@@ -158,13 +158,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             // INIT CONTAINERS
              if(state.initContainers.length > 0) {
-                 yaml += ckadComment('メインコンテナの前に実行される初期化コンテナ', 'initContainers');
+                 yaml += comment('メインコンテナの前に実行される初期化コンテナ', 'initContainers');
                  yaml += `\n  initContainers:`;
                  state.initContainers.forEach(ic => { yaml += `\n  - name: ${ic.name}\n    image: ${ic.image}`; });
              }
             // CONTAINERS
             const c = state.container;
-            yaml += ckadComment('Pod内で実行されるコンテナのリスト (最低1つは必須)', 'containers');
+            yaml += comment('Pod内で実行されるコンテナのリスト (最低1つは必須)', 'containers');
             yaml += `\n  - name: ${c.name}\n    image: ${c.image}`;
             if (c.command.length > 0) yaml += `\n    command: [${c.command.map(cmd => `"${cmd}"`).join(', ')}]`;
             if (c.args.length > 0) yaml += `\n    args: [${c.args.map(arg => `"${arg}"`).join(', ')}]`;
@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if(p.periodSeconds) probeDef += `\n      periodSeconds: ${parseInt(p.periodSeconds)}`;
                     if(p.timeoutSeconds) probeDef += `\n      timeoutSeconds: ${parseInt(p.timeoutSeconds)}`;
                     if(p.failureThreshold) probeDef += `\n      failureThreshold: ${parseInt(p.failureThreshold)}`;
-                    yaml += ckadComment(`${p.name}Probe: コンテナのヘルスチェック`, 'probes') + `\n    ${p.name}Probe:` + probeDef;
+                    yaml += comment(`${p.name}Probe: コンテナのヘルスチェック`, 'probes') + `\n    ${p.name}Probe:` + probeDef;
                  });
             }
              if (c.volumeMounts.length > 0) { yaml += `\n    volumeMounts:`; c.volumeMounts.forEach(vm => { yaml += `\n    - name: ${vm.name}\n      mountPath: "${vm.mountPath}"`; }); }
@@ -224,13 +224,13 @@ document.addEventListener('DOMContentLoaded', () => {
             generateYaml();
         });
 
-        get('copy-yaml-btn').addEventListener('click', () => { navigator.clipboard.writeText(yamlOutput.value).then(() => alert('Copied!')); });
+        get('copy-yaml-btn').addEventListener('click', () => { navigator.clipboard.writeText(yamlOutput.value).then(() => alert('コピーしました！')); });
         get('save-yaml-btn').addEventListener('click', () => {
             const filename = (get('podName').value || 'pod') + '.yaml';
             const blob = new Blob([yamlOutput.value], { type: 'text/yaml' });
             const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = filename; link.click(); URL.revokeObjectURL(link.href);
         });
-        get('ckad-mode-toggle').addEventListener('change', generateYaml);
+        get('comment-mode-toggle').addEventListener('change', generateYaml);
     }
 
     // --- INITIALIZATION ---
