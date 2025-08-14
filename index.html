@@ -27,13 +27,13 @@
                 <div class="content">
                      <div class="form-group"><label for="serviceAccountName">サービスアカウント名 <a href="https://k8s.io/docs/tasks/configure-pod-container/configure-service-account/" target="_blank">Doc</a></label><span class="notice">(注意: 事前にServiceAccountの作成が必要)</span><input type="text" id="serviceAccountName" placeholder="default"></div>
                     <div class="form-group"><label>ノードセレクター <a href="https://k8s.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector" target="_blank">Doc</a></label><div id="nodeSelector-list" class="dynamic-list"></div><button type="button" class="button" data-action="add" data-type="nodeSelector">+ セレクターを追加</button></div>
+                    <div class="form-group"><label for="restartPolicy">再起動ポリシー <a href="https://k8s.io/docs/concepts/workloads/pods/pod-lifecycle/#restart-policy" target="_blank">Doc</a></label><select id="restartPolicy"><option value="Always">常に再起動 (Always)</option><option value="OnFailure">失敗時のみ再起動 (OnFailure)</option><option value="Never">再起動しない (Never)</option></select></div>
                     <div class="form-group">
-                        <label for="restartPolicy">再起動ポリシー <a href="https://k8s.io/docs/concepts/workloads/pods/pod-lifecycle/#restart-policy" target="_blank">Doc</a></label>
-                        <select id="restartPolicy">
-                            <option value="Always">常に再起動 (Always)</option>
-                            <option value="OnFailure">失敗時のみ再起動 (OnFailure)</option>
-                            <option value="Never">再起動しない (Never)</option>
-                        </select>
+                        <label>Podセキュリティ設定 <a href="https://kubernetes.io/docs/tasks/configure-pod-container/security-context/" target="_blank">Doc</a></label>
+                        <div class="sub-form-group">
+                            <input type="number" id="pod_sc_runAsUser" placeholder="実行ユーザーID (runAsUser)">
+                            <input type="number" id="pod_sc_fsGroup" placeholder="ファイルグループID (fsGroup)">
+                        </div>
                     </div>
                 </div>
             </details>
@@ -53,6 +53,25 @@
                     <div class="form-group"><label for="containerName">コンテナ名 <span class="required">(必須)</span></label><input type="text" id="containerName" value="main-container" required></div>
                     <div class="form-group"><label for="imageName">コンテナイメージ <span class="required">(必須)</span><a href="https://k8s.io/docs/concepts/containers/images/" target="_blank">Doc</a></label><input type="text" id="imageName" value="nginx:latest" required></div>
                     <div class="form-group"><label>起動コマンドと引数 <a href="https://k8s.io/docs/tasks/inject-data-application/define-command-argument-container/" target="_blank">Doc</a></label><div id="command-list" class="dynamic-list"></div><button type="button" class="button" data-action="add" data-type="command">+ 起動コマンドを追加</button><div id="args-list" class="dynamic-list" style="margin-top:10px;"></div><button type="button" class="button" data-action="add" data-type="args">+ 引数を追加</button></div>
+                    <div class="form-group">
+                        <label>リソース (CPU/メモリ) <a href="https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/" target="_blank">Doc</a></label>
+                        <div class="sub-form-group">
+                            <input type="text" id="res_req_cpu" placeholder="CPU要求 (例: 100m)">
+                            <input type="text" id="res_lim_cpu" placeholder="CPU上限 (例: 200m)">
+                            <input type="text" id="res_req_mem" placeholder="メモリ要求 (例: 128Mi)">
+                            <input type="text" id="res_lim_mem" placeholder="メモリ上限 (例: 256Mi)">
+                        </div>
+                    </div>
+                     <div class="form-group">
+                        <label>コンテナセキュリティ設定 <a href="https://kubernetes.io/docs/tasks/configure-pod-container/security-context/" target="_blank">Doc</a></label>
+                        <div class="sub-form-group">
+                            <input type="number" id="con_sc_runAsUser" placeholder="実行ユーザーID (runAsUser)">
+                             <div class="checkbox-group">
+                                <input type="checkbox" id="con_sc_readOnlyRootFilesystem">
+                                <label for="con_sc_readOnlyRootFilesystem">読取専用ファイルシステム</label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </details>
 
