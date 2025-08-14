@@ -3,63 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultimate Kubernetes Pod Generator (CKAD Study Tool) - Final Version</title>
+    <title>Kubernetes Pod YAML Generator</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header class="header">
-        <h2>Ultimate K8s Pod Generator</h2>
-        </header>
+        <h2>Kubernetes Pod YAML Generator</h2>
+    </header>
 
     <main class="main-container">
         <div class="input-panel" id="kube-form">
             <details open>
-                <summary>Metadata</summary>
+                <summary>基本情報</summary>
                 <div class="content">
-                    <div class="form-group"><label for="podName">Pod Name <span class="required">(必須)</span><a href="https://k8s.io/docs/concepts/overview/working-with-objects/names/" target="_blank">Doc</a></label><input type="text" id="podName" value="my-pod" required></div>
-                    <div class="form-group"><label for="namespace">Namespace <a href="https://k8s.io/docs/concepts/overview/working-with-objects/namespaces/" target="_blank">Doc</a></label><input type="text" id="namespace" placeholder="default"></div>
-                    <div class="form-group"><label>Labels <a href="https://k8s.io/docs/concepts/overview/working-with-objects/labels/" target="_blank">Doc</a></label><div id="labels-list" class="dynamic-list"></div><button type="button" class="button" data-action="add" data-type="labels">+ Add Label</button></div>
+                    <div class="form-group"><label for="podName">Podの名前 <span class="required">(必須)</span><a href="https://k8s.io/docs/concepts/overview/working-with-objects/names/" target="_blank">Doc</a></label><input type="text" id="podName" value="my-pod" required></div>
+                    <div class="form-group"><label for="namespace">場所 (ネームスペース) <a href="https://k8s.io/docs/concepts/overview/working-with-objects/namespaces/" target="_blank">Doc</a></label><input type="text" id="namespace" placeholder="default"></div>
+                    <div class="form-group"><label>ラベル <a href="https://k8s.io/docs/concepts/overview/working-with-objects/labels/" target="_blank">Doc</a></label><div id="labels-list" class="dynamic-list"></div><button type="button" class="button" data-action="add" data-type="labels">+ ラベルを追加</button></div>
                 </div>
             </details>
 
-            <details open>
-                <summary>Pod Spec</summary>
+            <details>
+                <summary>Podの詳細設定</summary>
                 <div class="content">
-                     <div class="form-group"><label for="serviceAccountName">ServiceAccount Name <a href="https://k8s.io/docs/tasks/configure-pod-container/configure-service-account/" target="_blank">Doc</a></label><span class="notice">(注意: 事前にServiceAccountの作成が必要)</span><input type="text" id="serviceAccountName" placeholder="default"></div>
-                    <div class="form-group"><label>Node Selector <a href="https://k8s.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector" target="_blank">Doc</a></label><div id="nodeSelector-list" class="dynamic-list"></div><button type="button" class="button" data-action="add" data-type="nodeSelector">+ Add Selector</button></div>
-                    <div class="form-group"><label for="restartPolicy">Restart Policy <a href="https://k8s.io/docs/concepts/workloads/pods/pod-lifecycle/#restart-policy" target="_blank">Doc</a></label><select id="restartPolicy"><option>Always</option><option>OnFailure</option><option>Never</option></select></div>
+                     <div class="form-group"><label for="serviceAccountName">サービスアカウント名 <a href="https://k8s.io/docs/tasks/configure-pod-container/configure-service-account/" target="_blank">Doc</a></label><span class="notice">(注意: 事前にServiceAccountの作成が必要)</span><input type="text" id="serviceAccountName" placeholder="default"></div>
+                    <div class="form-group"><label>ノードセレクター <a href="https://k8s.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector" target="_blank">Doc</a></label><div id="nodeSelector-list" class="dynamic-list"></div><button type="button" class="button" data-action="add" data-type="nodeSelector">+ セレクターを追加</button></div>
+                    <div class="form-group">
+                        <label for="restartPolicy">再起動ポリシー <a href="https://k8s.io/docs/concepts/workloads/pods/pod-lifecycle/#restart-policy" target="_blank">Doc</a></label>
+                        <select id="restartPolicy">
+                            <option value="Always">常に再起動 (Always)</option>
+                            <option value="OnFailure">失敗時のみ再起動 (OnFailure)</option>
+                            <option value="Never">再起動しない (Never)</option>
+                        </select>
+                    </div>
                 </div>
             </details>
             
             <details>
-                <summary>Init Containers <a href="https://k8s.io/docs/concepts/workloads/pods/init-containers/" target="_blank">Doc</a></summary>
+                <summary>初期化コンテナ</summary>
                 <div class="content">
+                    <p class="description">メインコンテナが起動する前に、特定の準備処理を実行するためのコンテナです。</p>
                     <div id="initContainers-list" class="dynamic-list"></div>
-                    <button type="button" class="button" data-action="add" data-type="initContainers">+ Add Init Container</button>
+                    <button type="button" class="button" data-action="add" data-type="initContainers">+ 初期化コンテナを追加</button>
                 </div>
             </details>
 
             <details open>
-                <summary>Container Spec (main)</summary>
+                <summary>メインコンテナの設定</summary>
                 <div class="content">
-                    <div class="form-group"><label for="containerName">Container Name <span class="required">(必須)</span></label><input type="text" id="containerName" value="main-container" required></div>
-                    <div class="form-group"><label for="imageName">Image <span class="required">(必須)</span><a href="https://k8s.io/docs/concepts/containers/images/" target="_blank">Doc</a></label><input type="text" id="imageName" value="nginx:latest" required></div>
-                    <div class="form-group"><label>Command & Args <a href="https://k8s.io/docs/tasks/inject-data-application/define-command-argument-container/" target="_blank">Doc</a></label><div id="command-list" class="dynamic-list"></div><button type="button" class="button" data-action="add" data-type="command">+ Add Command</button><div id="args-list" class="dynamic-list" style="margin-top:10px;"></div><button type="button" class="button" data-action="add" data-type="args">+ Add Argument</button></div>
+                    <div class="form-group"><label for="containerName">コンテナ名 <span class="required">(必須)</span></label><input type="text" id="containerName" value="main-container" required></div>
+                    <div class="form-group"><label for="imageName">コンテナイメージ <span class="required">(必須)</span><a href="https://k8s.io/docs/concepts/containers/images/" target="_blank">Doc</a></label><input type="text" id="imageName" value="nginx:latest" required></div>
+                    <div class="form-group"><label>起動コマンドと引数 <a href="https://k8s.io/docs/tasks/inject-data-application/define-command-argument-container/" target="_blank">Doc</a></label><div id="command-list" class="dynamic-list"></div><button type="button" class="button" data-action="add" data-type="command">+ 起動コマンドを追加</button><div id="args-list" class="dynamic-list" style="margin-top:10px;"></div><button type="button" class="button" data-action="add" data-type="args">+ 引数を追加</button></div>
                 </div>
             </details>
 
-            <details><summary>Environment Variables</summary><div class="content"><h4>Key-Value Pairs</h4><div id="env-list" class="dynamic-list"></div><button type="button" class="button" data-action="add" data-type="env">+ Add Env Var</button><hr><h4>From ConfigMap/Secret</h4><div id="envFrom-list" class="dynamic-list"></div><button type="button" class="button" data-action="add" data-type="envFrom">+ Add envFrom</button></div></details>
+            <details><summary>環境変数</summary><div class="content"><h4>キーと値のペア</h4><div id="env-list" class="dynamic-list"></div><button type="button" class="button" data-action="add" data-type="env">+ 環境変数を追加</button><hr><h4>ConfigMap/Secretから読み込み</h4><div id="envFrom-list" class="dynamic-list"></div><button type="button" class="button" data-action="add" data-type="envFrom">+ 読み込み元を追加</button></div></details>
             
-            <details><summary>Probes (Liveness / Readiness / Startup) <a href="https://k8s.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/" target="_blank">Doc</a></summary><div class="content" id="probe-container"></div></details>
+            <details><summary>ヘルスチェック（生存確認）</summary><div class="content" id="probe-container"></div></details>
             
-            <details><summary>Volumes & Volume Mounts <span class="notice">(依存リソースの事前作成が必要な場合があります)</span></summary><div class="content"><h4>Volumes</h4><div id="volume-list" class="dynamic-list"></div><button type="button" class="button" data-action="add" data-type="volume">+ Add Volume</button><hr><h4>Volume Mounts</h4><div id="volumeMount-list" class="dynamic-list"></div><button type="button" class="button" data-action="add" data-type="volumeMount">+ Add Volume Mount</button></div></details>
+            <details><summary>共有ストレージ（ボリューム）</summary><div class="content"><h4>共有ストレージの定義</h4><div id="volume-list" class="dynamic-list"></div><button type="button" class="button" data-action="add" data-type="volume">+ 共有ストレージを追加</button><hr><h4>コンテナ内の接続先（マウント）</h4><div id="volumeMount-list" class="dynamic-list"></div><button type="button" class="button" data-action="add" data-type="volumeMount">+ 接続先を追加</button></div></details>
         </div>
         <div class="output-panel">
              <div class="output-panel-header">
                 <div class="output-panel-buttons">
                     <button type="button" class="button" id="copy-yaml-btn">YAMLをコピー</button>
                     <button type="button" class="button secondary" id="save-yaml-btn">ファイルに保存</button>
-                    <div class="ckad-switch-container"><label for="ckad-mode-toggle">CKAD対策モード</label><label class="switch"><input type="checkbox" id="ckad-mode-toggle"><span class="slider round"></span></label></div>
+                    <div class="comment-switch-container"><label for="comment-mode-toggle">コメント付きYAML</label><label class="switch"><input type="checkbox" id="comment-mode-toggle"><span class="slider round"></span></label></div>
                 </div>
                  <div id="deploy-command" class="command"></div>
             </div>
@@ -67,13 +75,13 @@
         </div>
     </main>
 
-    <template id="key-value-template"><div class="dynamic-list-item key-value-item"><div><input type="text" class="item-key" placeholder="Key"></div><div><input type="text" class="item-value" placeholder="Value"></div><button type="button" class="button danger" data-action="remove">X</button></div></template>
-    <template id="single-value-template"><div class="dynamic-list-item single-value-item"><div><input type="text" class="item-value" placeholder="Value"></div><button type="button" class="button danger" data-action="remove">X</button></div></template>
-    <template id="volume-template"><div class="dynamic-list-item"><div><div class="form-group"><label>Volume Name <span class="required">(必須)</span></label><input type="text" class="item-name" required></div><div class="form-group"><label>Volume Type</label><select class="item-type"><option value="emptyDir">emptyDir</option><option value="configMap">ConfigMap</option><option value="secret">Secret</option><option value="persistentVolumeClaim">PVC</option></select></div><div class="volume-options"></div></div><button type="button" class="button danger" data-action="remove">Remove</button></div></template>
-    <template id="volumeMount-template"><div class="dynamic-list-item key-value-item"><div><label>Volume to Mount</label><select class="item-name"></select></div><div><label>Mount Path <span class="required">(必須)</span></label><input type="text" class="item-mountPath" placeholder="/path/in/container" required></div><button type="button" class="button danger" data-action="remove">X</button></div></template>
-    <template id="probe-template"><div class="dynamic-list-item probe-item"><h4 class="probe-label"></h4><div class="form-group"><label>Probe Type</label><select class="probe-type"><option value="none">None</option><option value="httpGet">HTTP GET</option><option value="tcpSocket">TCP Socket</option><option value="exec">Exec Command</option></select></div><div class="probe-options"></div><div class="sub-form-group" style="margin-top:10px;"><input type="number" class="probe-initialDelaySeconds" placeholder="Initial Delay (s)"><input type="number" class="probe-periodSeconds" placeholder="Period (s)"><input type="number" class="probe-timeoutSeconds" placeholder="Timeout (s)"><input type="number" class="probe-failureThreshold" placeholder="Failure Threshold"></div></div></template>
-    <template id="initContainer-template"><div class="dynamic-list-item"><h4>Init Container</h4><div class="form-group"><label>Name <span class="required">(必須)</span></label><input type="text" class="item-name" required></div><div class="form-group"><label>Image <span class="required">(必須)</span></label><input type="text" class="item-image" required></div><button type="button" class="button danger" data-action="remove">Remove</button></div></template>
-    <template id="envFrom-template"><div class="dynamic-list-item envFrom-item"><div><select class="item-type"><option value="configMapRef">ConfigMap</option><option value="secretRef">Secret</option></select></div><div><input type="text" class="item-name" placeholder="Name of source"></div><button type="button" class="button danger" data-action="remove">X</button></div></template>
+    <template id="key-value-template"><div class="dynamic-list-item key-value-item"><div><label>キー (名前)</label><input type="text" class="item-key" placeholder="例: app"></div><div><label>値</label><input type="text" class="item-value" placeholder="例: my-nginx"></div><button type="button" class="button danger" data-action="remove">X</button></div></template>
+    <template id="single-value-template"><div class="dynamic-list-item single-value-item"><div><label>値</label><input type="text" class="item-value" placeholder="例: /bin/sh"></div><button type="button" class="button danger" data-action="remove">X</button></div></template>
+    <template id="volume-template"><div class="dynamic-list-item"><div><div class="form-group"><label>共有ストレージ名 <span class="required">(必須)</span></label><input type="text" class="item-name" required></div><div class="form-group"><label>種類</label><select class="item-type"><option value="emptyDir">一時</option><option value="configMap">ConfigMap</option><option value="secret">Secret</option><option value="persistentVolumeClaim">永続ボリューム(PVC)</option></select></div><div class="volume-options"></div></div><button type="button" class="button danger" data-action="remove">削除</button></div></template>
+    <template id="volumeMount-template"><div class="dynamic-list-item key-value-item"><div><label>接続するストレージ</label><select class="item-name"></select></div><div><label>コンテナ内のパス <span class="required">(必須)</span></label><input type="text" class="item-mountPath" placeholder="/path/in/container" required></div><button type="button" class="button danger" data-action="remove">X</button></div></template>
+    <template id="probe-template"><div class="dynamic-list-item probe-item"><h4 class="probe-label"></h4><div class="form-group"><label>確認方法</label><select class="probe-type"><option value="none">設定しない</option><option value="httpGet">HTTPリクエスト</option><option value="tcpSocket">TCP接続</option><option value="exec">コマンド実行</option></select></div><div class="probe-options"></div><div class="sub-form-group" style="margin-top:10px;"><input type="number" class="probe-initialDelaySeconds" placeholder="初回確認までの時間(秒)"><input type="number" class="probe-periodSeconds" placeholder="確認間隔(秒)"><input type="number" class="probe-timeoutSeconds" placeholder="タイムアウト(秒)"><input type="number" class="probe-failureThreshold" placeholder="失敗とみなす回数"></div></div></template>
+    <template id="initContainer-template"><div class="dynamic-list-item"><h4>初期化コンテナ</h4><div class="form-group"><label>コンテナ名 <span class="required">(必須)</span></label><input type="text" class="item-name" required></div><div class="form-group"><label>コンテナイメージ <span class="required">(必須)</span></label><input type="text" class="item-image" required></div><button type="button" class="button danger" data-action="remove">削除</button></div></template>
+    <template id="envFrom-template"><div class="dynamic-list-item envFrom-item"><div><label>ソースの種類</label><select class="item-type"><option value="configMapRef">ConfigMap</option><option value="secretRef">Secret</option></select></div><div><label>ソースの名前</label><input type="text" class="item-name" placeholder="Name of source"></div><button type="button" class="button danger" data-action="remove">X</button></div></template>
     
     <script src="script.js" defer></script>
 </body>
