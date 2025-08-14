@@ -6,8 +6,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const K8S_DOCS = {
         initContainers: "https://k8s.io/docs/concepts/workloads/pods/init-containers/",
         probes: "https://k8s.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
-        resources: "https://k8s.io/docs/concepts/configuration/manage-resources-containers/",
-        securityContext: "https://k8s.io/docs/tasks/configure-pod-container/security-context/",
         // ... (other doc URLs)
     };
 
@@ -25,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function addDynamicItem(type) {
         const templateIdMap = {
             labels: 'key-value-template', nodeSelector: 'key-value-template', env: 'key-value-template',
-            command: 'single-value-template', args: 'single-value-template', 
+            command: 'single-value-template', args: 'single-value-template',
             volume: 'volume-template', volumeMount: 'volumeMount-template',
             envFrom: 'envFrom-template', initContainers: 'initContainer-template'
         };
@@ -100,7 +98,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- STATE COLLECTION ---
     function collectState() {
         const getVal = id => get(id)?.value;
-        const getChecked = id => get(id)?.checked;
         const getKv = id => Array.from(getAll(`#${id} .key-value-item`)).map(i => ({ key: i.querySelector('.item-key')?.value, value: i.querySelector('.item-value')?.value })).filter(i => i.key);
         const getSingle = id => Array.from(getAll(`#${id} .dynamic-list-item`)).map(i => i.querySelector('.item-value')?.value).filter(Boolean);
         
@@ -108,10 +105,6 @@ document.addEventListener('DOMContentLoaded', () => {
             podName: getVal('podName'), namespace: getVal('namespace'), labels: getKv('labels-list'),
             serviceAccountName: getVal('serviceAccountName'), nodeSelector: getKv('nodeSelector-list'),
             restartPolicy: getVal('restartPolicy'), 
-            podSecurityContext: {
-                runAsUser: getVal('pod_sc_runAsUser'),
-                fsGroup: getVal('pod_sc_fsGroup')
-            },
             volumes: Array.from(getAll('#volume-list .dynamic-list-item')).map(item => {
                 const type = item.querySelector('.item-type')?.value;
                 const vol = { name: item.querySelector('.item-name')?.value, type: type };
@@ -125,14 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 name: getVal('containerName'), image: getVal('imageName'), command: getSingle('command-list'), args: getSingle('args-list'),
                 env: getKv('env-list'),
                 envFrom: Array.from(getAll('#envFrom-list .envFrom-item')).map(e => ({ type: e.querySelector('.item-type')?.value, name: e.querySelector('.item-name')?.value })).filter(e => e.name),
-                resources: {
-                    requests: { cpu: getVal('res_req_cpu'), memory: getVal('res_req_mem') },
-                    limits: { cpu: getVal('res_lim_cpu'), memory: getVal('res_lim_mem') }
-                },
-                securityContext: {
-                    runAsUser: getVal('con_sc_runAsUser'),
-                    readOnlyRootFilesystem: getChecked('con_sc_readOnlyRootFilesystem')
-                },
                 probes: Array.from(getAll('.probe-item')).map(p => {
                     const probe = { name: p.dataset.probeName, type: p.querySelector('.probe-type')?.value, initialDelaySeconds: p.querySelector('.probe-initialDelaySeconds')?.value, periodSeconds: p.querySelector('.probe-periodSeconds')?.value, timeoutSeconds: p.querySelector('.probe-timeoutSeconds')?.value, failureThreshold: p.querySelector('.probe-failureThreshold')?.value };
                     if (probe.type === 'httpGet') { probe.path = p.querySelector('.probe-http-path')?.value; probe.port = p.querySelector('.probe-http-port')?.value; } 
@@ -160,13 +145,6 @@ document.addEventListener('DOMContentLoaded', () => {
             yaml += `\nspec:`;
             if (state.serviceAccountName) yaml += `\n  serviceAccountName: ${state.serviceAccountName}`;
             if (state.restartPolicy !== 'Always') yaml += `\n  restartPolicy: ${state.restartPolicy}`;
-            const psc = state.podSecurityContext;
-            if (Object.values(psc).some(Boolean)) {
-                 yaml += comment('Pod全体に適用されるセキュリティ設定', 'securityContext');
-                 yaml += `\n  securityContext:`;
-                 if (psc.runAsUser) yaml += `\n    runAsUser: ${parseInt(psc.runAsUser)}`;
-                 if (psc.fsGroup) yaml += `\n    fsGroup: ${parseInt(psc.fsGroup)}`;
-            }
             if (state.nodeSelector.length > 0) { yaml += `\n  nodeSelector:`; state.nodeSelector.forEach(s => { yaml += `\n    ${s.key}: ${s.value}`; }); }
             if (state.volumes.length > 0) {
                  yaml += `\n  volumes:`;
@@ -197,28 +175,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     yaml += `\n    envFrom:`;
                     c.envFrom.forEach(ef => { yaml += `\n    - ${ef.type}:\n        name: ${ef.name}`; });
                 }
-            }
-            const res = c.resources;
-            if (Object.values(res.requests).some(Boolean) || Object.values(res.limits).some(Boolean)) {
-                 yaml += comment('コンテナが使用するリソースの要求量と上限値', 'resources');
-                 yaml += `\n    resources:`;
-                 if (Object.values(res.requests).some(Boolean)) {
-                     yaml += `\n      requests:`;
-                     if(res.requests.cpu) yaml += `\n        cpu: "${res.requests.cpu}"`;
-                     if(res.requests.memory) yaml += `\n        memory: "${res.requests.memory}"`;
-                 }
-                  if (Object.values(res.limits).some(Boolean)) {
-                     yaml += `\n      limits:`;
-                     if(res.limits.cpu) yaml += `\n        cpu: "${res.limits.cpu}"`;
-                     if(res.limits.memory) yaml += `\n        memory: "${res.limits.memory}"`;
-                 }
-            }
-            const csc = c.securityContext;
-            if (Object.values(csc).some(Boolean)) {
-                 yaml += comment('コンテナ単位で適用されるセキュリティ設定', 'securityContext');
-                 yaml += `\n    securityContext:`;
-                 if (csc.runAsUser) yaml += `\n      runAsUser: ${parseInt(csc.runAsUser)}`;
-                 if (csc.readOnlyRootFilesystem) yaml += `\n      readOnlyRootFilesystem: true`;
             }
             if (c.probes.length > 0) {
                  c.probes.forEach(p => {
