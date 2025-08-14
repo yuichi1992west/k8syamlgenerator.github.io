@@ -46,8 +46,6 @@ details[open] summary { border-bottom: 1px solid var(--border-color); }
 .description { font-size: 13px; color: #6c757d; margin-top: -10px; margin-bottom: 15px; }
 .form-group { margin-bottom: 20px; }
 .sub-form-group { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
-.checkbox-group { display: flex; align-items: center; gap: 8px; }
-.checkbox-group input { width: auto; }
 hr { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
 label { display: block; font-weight: 500; margin-bottom: 8px; color: var(--label-color); }
 label a { margin-left: 8px; font-size: 12px; font-weight: normal; color: var(--link-color); text-decoration: none; }
